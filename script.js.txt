@@ -1,0 +1,182 @@
+const PROGRAMA = [
+  { semana: 1,  bloque: 'Mes 1 - Fundamentos', inicio: '2026-04-27', fin: '2026-05-03' },
+  { semana: 2,  bloque: 'Mes 1 - Fundamentos', inicio: '2026-05-04', fin: '2026-05-10' },
+  { semana: 3,  bloque: 'Mes 1 - Fundamentos', inicio: '2026-05-11', fin: '2026-05-17' },
+  { semana: 4,  bloque: 'Mes 1 - Fundamentos', inicio: '2026-05-18', fin: '2026-05-24' },
+  { semana: 5,  bloque: 'Mes 2 - Volumen',     inicio: '2026-05-25', fin: '2026-05-31' },
+  { semana: 6,  bloque: 'Mes 2 - Volumen',     inicio: '2026-06-01', fin: '2026-06-07' },
+  { semana: 7,  bloque: 'Mes 2 - Volumen',     inicio: '2026-06-08', fin: '2026-06-14' },
+  { semana: 8,  bloque: 'Mes 2 - Volumen',     inicio: '2026-06-15', fin: '2026-06-21' },
+  { semana: 9,  bloque: 'Mes 3 - Intensidad',  inicio: '2026-06-22', fin: '2026-06-28' },
+  { semana: 10, bloque: 'Mes 3 - Intensidad',  inicio: '2026-06-29', fin: '2026-07-05' },
+  { semana: 11, bloque: 'Mes 3 - Intensidad',  inicio: '2026-07-06', fin: '2026-07-12' },
+  { semana: 12, bloque: 'Mes 3 - Intensidad',  inicio: '2026-07-13', fin: '2026-07-19' },
+];
+
+const PLAN_DIARIO = {
+  'Lunes':     [{ tipo: 'Movilidad', ejercicios: ['Movilidad general', 'Activacion neuromuscular'] }],
+  'Martes':    [{ tipo: 'Upper Body Calistenia', ejercicios: ['Pull-ups', 'Push-ups', 'Fondos', 'Remo invertido', 'Core (plancha seg)'] }],
+  'Miercoles': [{ tipo: 'Pierna Peso Libre', ejercicios: ['Back Squat', 'Peso Muerto', 'Bulgarian Split', 'Goblet Squat'] }],
+  'Jueves':    [{ tipo: 'Pliometricos alta intensidad', ejercicios: ['Box Jump alto', 'Depth Jump', 'Single Leg Bound', 'Lateral Bound'] }],
+  'Viernes':   [{ tipo: 'Upper Body Calistenia', ejercicios: ['Pull-ups', 'Push-ups', 'Fondos', 'Remo invertido', 'Core (plancha seg)'] }],
+};
+
+const DIAS_ES = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+
+function getSesiones() { return JSON.parse(localStorage.getItem('progresapp_sesiones') || '[]'); }
+function saveSesion(s) { const a = getSesiones(); a.push(s); localStorage.setItem('progresapp_sesiones', JSON.stringify(a)); }
+function fechaHoy() { return new Date().toISOString().split('T')[0]; }
+function diaDeHoy() { return DIAS_ES[new Date().getDay()]; }
+function semanaActual() {
+  const hoy = new Date();
+  for (const s of PROGRAMA) { if (hoy >= new Date(s.inicio) && hoy <= new Date(s.fin)) return s; }
+  return null;
+}
+function bloqueClass(b) { return b.includes('Fundamentos') ? 'bloque-1' : b.includes('Volumen') ? 'bloque-2' : 'bloque-3'; }
+function sesionesEnRango(inicio, fin) {
+  const f = new Set();
+  getSesiones().forEach(s => { const d = new Date(s.fecha); if (d >= new Date(inicio) && d <= new Date(fin)) f.add(s.fecha); });
+  return f.size;
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'inicio') renderInicio();
+  if (id === 'registrar') renderRegistrar();
+  if (id === 'programa') renderPrograma();
+  if (id === 'progreso') renderProgreso();
+}
+
+function renderInicio() {
+  const s = semanaActual();
+  document.getElementById('semana-actual').textContent = s ? 'Semana ' + s.semana : 'Fuera del programa';
+  document.getElementById('bloque-actual').textContent = s ? s.bloque.split(' - ')[1] : '--';
+  if (s) {
+    const comp = sesionesEnRango(s.inicio, s.fin);
+    document.getElementById('sesiones-semana').textContent = comp + ' / 5';
+    const total = new Set(getSesiones().map(x => x.fecha)).size;
+    const adh = Math.round((total / ((s.semana - 1) * 5 + 5)) * 100);
+    document.getElementById('adherencia-total').textContent = Math.min(adh, 100) + '%';
+  }
+  const dia = diaDeHoy();
+  const hoy = document.getElementById('hoy-contenido');
+  hoy.innerHTML = PLAN_DIARIO[dia]
+    ? PLAN_DIARIO[dia].map(p => '<div class="hoy-item"><span class="hoy-badge">' + p.tipo + '</span><span>' + p.ejercicios.join(', ') + '</span></div>').join('')
+    : '<div class="hoy-item">Descanso - Recupera bien!</div>';
+  const sesiones = getSesiones().slice(-20).reverse();
+  const ul = document.getElementById('ultimas-sesiones');
+  if (!sesiones.length) { ul.innerHTML = '<div style="color:var(--muted);font-size:0.9rem">Aun no hay sesiones registradas.</div>'; return; }
+  const ag = {};
+  sesiones.forEach(s => { if (!ag[s.fecha]) ag[s.fecha] = []; ag[s.fecha].push(s); });
+  ul.innerHTML = Object.entries(ag).slice(0,5).map(([f, items]) =>
+    '<div class="sesion-item"><div>' + [...new Set(items.map(i => i.ejercicio))].join(', ') + '</div><div class="sesion-fecha">' + f + ' - ' + items.length + ' series</div></div>'
+  ).join('');
+}
+
+function renderRegistrar() { document.getElementById('reg-fecha').value = fechaHoy(); renderSeriesHoy(); }
+
+function guardarSesion() {
+  const fecha = document.getElementById('reg-fecha').value;
+  const ejercicio = document.getElementById('reg-ejercicio').value;
+  const serie = document.getElementById('reg-serie').value;
+  const reps = document.getElementById('reg-reps').value;
+  const peso = document.getElementById('reg-peso').value;
+  const notas = document.getElementById('reg-notas').value;
+  if (!fecha || !ejercicio || !serie || !reps) { mostrarMensaje('Completa fecha, ejercicio, serie y reps', 'var(--orange)'); return; }
+  saveSesion({ fecha, ejercicio, serie: +serie, reps: +reps, peso: +(peso||0), notas });
+  mostrarMensaje('Serie guardada correctamente');
+  document.getElementById('reg-serie').value = +serie + 1;
+  document.getElementById('reg-reps').value = '';
+  document.getElementById('reg-peso').value = '';
+  document.getElementById('reg-notas').value = '';
+  renderSeriesHoy();
+}
+
+function mostrarMensaje(txt, color) {
+  const el = document.getElementById('reg-mensaje');
+  el.style.color = color || 'var(--green)';
+  el.textContent = txt;
+  setTimeout(() => el.textContent = '', 3000);
+}
+
+function renderSeriesHoy() {
+  const fecha = document.getElementById('reg-fecha').value || fechaHoy();
+  const todas = getSesiones();
+  const hoy = todas.filter(s => s.fecha === fecha);
+  const cont = document.getElementById('series-hoy');
+  if (!hoy.length) { cont.innerHTML = '<div style="color:var(--muted);font-size:0.9rem">Sin series para esta fecha.</div>'; return; }
+  cont.innerHTML = hoy.map(s => {
+    const idx = todas.indexOf(s);
+    return '<div class="serie-item"><div><strong>' + s.ejercicio + '</strong><div class="serie-info">Serie ' + s.serie + ' - ' + s.reps + ' reps - ' + s.peso + ' kg</div>' + (s.notas ? '<div class="serie-info">' + s.notas + '</div>' : '') + '</div><button onclick="borrarSerie(' + idx + ')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1.1rem">X</button></div>';
+  }).join('');
+}
+
+function borrarSerie(idx) {
+  const a = getSesiones(); a.splice(idx, 1);
+  localStorage.setItem('progresapp_sesiones', JSON.stringify(a));
+  renderSeriesHoy();
+}
+
+function renderPrograma() {
+  const activa = semanaActual();
+  document.getElementById('programa-grid').innerHTML = PROGRAMA.map(s => {
+    const comp = sesionesEnRango(s.inicio, s.fin);
+    const pct = Math.round((comp / 5) * 100);
+    const es = activa && activa.semana === s.semana;
+    return '<div class="semana-card ' + (es ? 'activa' : '') + '"><div class="semana-header"><span class="semana-num">Semana ' + s.semana + '</span><span class="semana-bloque ' + bloqueClass(s.bloque) + '">' + s.bloque.split(' - ')[1] + '</span></div><div class="semana-fechas">' + s.inicio + ' a ' + s.fin + '</div><div class="semana-progress"><div class="semana-progress-bar" style="width:' + pct + '%"></div></div><div style="font-size:0.78rem;color:var(--muted);margin-top:6px">' + comp + '/5 sesiones' + (es ? ' - Semana actual' : '') + '</div></div>';
+  }).join('');
+}
+
+let miChart = null;
+function renderProgreso() {
+  const ej = document.getElementById('prog-ejercicio').value;
+  const ses = getSesiones().filter(s => s.ejercicio === ej);
+  document.getElementById('max-reps').textContent = ses.length ? Math.max(...ses.map(s => s.reps)) : '--';
+  document.getElementById('max-peso').textContent = ses.length ? Math.max(...ses.map(s => s.peso)) : '--';
+  document.getElementById('total-series').textContent = ses.length || '--';
+  const noData = document.getElementById('no-data');
+  const canvas = document.getElementById('miChart');
+  if (!ses.length) {
+    noData.style.display = 'block'; canvas.style.display = 'none';
+    if (miChart) { miChart.destroy(); miChart = null; }
+    document.getElementById('historial-ejercicio').innerHTML = ''; return;
+  }
+  noData.style.display = 'none'; canvas.style.display = 'block';
+  const ag = {};
+  ses.forEach(s => { if (!ag[s.fecha]) ag[s.fecha] = []; ag[s.fecha].push(s); });
+  const labels = Object.keys(ag).sort();
+  if (miChart) miChart.destroy();
+  miChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Max reps', data: labels.map(f => Math.max(...ag[f].map(s => s.reps))), borderColor: '#6C63FF', backgroundColor: 'rgba(108,99,255,0.15)', tension: 0.3, fill: true },
+        { label: 'Max peso kg', data: labels.map(f => Math.max(...ag[f].map(s => s.peso))), borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.10)', tension: 0.3, fill: true }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#e0e0e0' } } },
+      scales: {
+        x: { ticks: { color: '#888' }, grid: { color: '#222' } },
+        y: { ticks: { color: '#888' }, grid: { color: '#222' } }
+      }
+    }
+  });
+  document.getElementById('historial-ejercicio').innerHTML = '<h2 style="margin-bottom:12px;font-size:1rem">Historial</h2>' +
+    ses.slice().reverse().map(s =>
+      '<div class="sesion-item"><div><strong>Serie ' + s.serie + '</strong> - ' + s.reps + ' reps - ' + s.peso + ' kg</div><div class="sesion-fecha">' + s.fecha + (s.notas ? ' - ' + s.notas : '') + '</div></div>'
+    ).join('');
+}
+
+(function() {
+  const sc = document.createElement('script');
+  sc.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+  document.head.appendChild(sc);
+})();
+
+renderInicio();

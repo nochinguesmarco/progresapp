@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Progresapp</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <span class="logo">💪 Progresapp</span>
+    <div class="nav-links">
+      <button onclick="showSection('inicio')" class="nav-btn active" id="nav-inicio">Inicio</button>
+      <button onclick="showSection('registrar')" class="nav-btn" id="nav-registrar">Registrar</button>
+      <button onclick="showSection('programa')" class="nav-btn" id="nav-programa">Programa</button>
+      <button onclick="showSection('progreso')" class="nav-btn" id="nav-progreso">Progreso</button>
+    </div>
+  </nav>
+
+  <!-- INICIO -->
+  <section id="inicio" class="section active">
+    <div class="hero">
+      <h1>Bienvenido, Marco 👋</h1>
+      <p class="subtitle">Tu programa de 12 semanas</p>
+    </div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon">📅</div>
+        <div class="card-label">Semana actual</div>
+        <div class="card-value" id="semana-actual">—</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧱</div>
+        <div class="card-label">Bloque</div>
+        <div class="card-value" id="bloque-actual">—</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">✅</div>
+        <div class="card-label">Sesiones esta semana</div>
+        <div class="card-value" id="sesiones-semana">0 / 5</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔥</div>
+        <div class="card-label">Adherencia total</div>
+        <div class="card-value" id="adherencia-total">0%</div>
+      </div>
+    </div>
+
+    <div class="today-card">
+      <h2>Hoy toca 📋</h2>
+      <div id="hoy-contenido" class="hoy-box"></div>
+    </div>
+
+    <div class="ultimas">
+      <h2>Últimas sesiones</h2>
+      <div id="ultimas-sesiones"></div>
+    </div>
+  </section>
+
+  <!-- REGISTRAR -->
+  <section id="registrar" class="section">
+    <h1>Registrar sesión</h1>
+    <div class="form-card">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="reg-fecha" />
+      </div>
+      <div class="form-group">
+        <label>Ejercicio</label>
+        <select id="reg-ejercicio">
+          <option value="">— Selecciona —</option>
+          <optgroup label="Movilidad">
+            <option>Movilidad general</option>
+            <option>Activación neuromuscular</option>
+          </optgroup>
+          <optgroup label="Upper Body Calistenia">
+            <option>Pull-ups</option>
+            <option>Push-ups</option>
+            <option>Fondos</option>
+            <option>Remo invertido</option>
+            <option>Core (plancha seg)</option>
+          </optgroup>
+          <optgroup label="Pierna Peso Libre">
+            <option>Back Squat</option>
+            <option>Peso Muerto</option>
+            <option>Bulgarian Split</option>
+            <option>Goblet Squat</option>
+          </optgroup>
+          <optgroup label="Pliométricos">
+            <option>Box Jump alto</option>
+            <option>Depth Jump</option>
+            <option>Single Leg Bound</option>
+            <option>Lateral Bound</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Serie #</label>
+          <input type="number" id="reg-serie" min="1" max="10" placeholder="1" />
+        </div>
+        <div class="form-group">
+          <label>Reps</label>
+          <input type="number" id="reg-reps" min="1" placeholder="10" />
+        </div>
+        <div class="form-group">
+          <label>Peso (kg)</label>
+          <input type="number" id="reg-peso" min="0" step="0.5" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notas</label>
+        <textarea id="reg-notas" placeholder="¿Cómo te sentiste? ¿Algo a mejorar?"></textarea>
+      </div>
+      <button class="btn-primary" onclick="guardarSesion()">💾 Guardar serie</button>
+      <div id="reg-mensaje" class="mensaje"></div>
+    </div>
+
+    <div class="sesiones-hoy">
+      <h2>Series registradas hoy</h2>
+      <div id="series-hoy"></div>
+    </div>
+  </section>
+
+  <!-- PROGRAMA -->
+  <section id="programa" class="section">
+    <h1>Programa 12 semanas</h1>
+    <div id="programa-grid"></div>
+  </section>
+
+  <!-- PROGRESO -->
+  <section id="progreso" class="section">
+    <h1>Mi progreso</h1>
+    <div class="form-group">
+      <label>Selecciona ejercicio</label>
+      <select id="prog-ejercicio" onchange="renderProgreso()">
+        <option>Pull-ups</option>
+        <option>Push-ups</option>
+        <option>Fondos</option>
+        <option>Back Squat</option>
+        <option>Peso Muerto</option>
+        <option>Bulgarian Split</option>
+        <option>Box Jump alto</option>
+      </select>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-label">Máx reps</div>
+        <div class="stat-value" id="max-reps">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Máx peso (kg)</div>
+        <div class="stat-value" id="max-peso">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Total series</div>
+        <div class="stat-value" id="total-series">—</div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="miChart"></canvas>
+      <div id="no-data" class="no-data">Aún no hay datos para este ejercicio.<br>¡Empieza a registrar sesiones!</div>
+    </div>
+    <div id="historial-ejercicio"></div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
